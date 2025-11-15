@@ -1,65 +1,147 @@
-import Image from "next/image";
+import { PairingCard } from '@/components/PairingCard';
+import { SaveButton } from '@/components/SaveButton';
+import { savePairingAction } from './actions/savePairing';
 
-export default function Home() {
+interface Meal {
+  strMeal: string;
+  strMealThumb: string;
+  strCategory: string;
+}
+
+interface Movie {
+  title: string;
+  poster_path: string;
+  release_date: string;
+  vote_average: number;
+}
+
+/**
+ * Fetch random meal from MealDB
+ */
+async function getRandomMeal(): Promise<Meal | null> {
+  try {
+    const res = await fetch('https://www.themealdb.com/api/json/v1/1/random.php', {
+      cache: 'no-store',
+    });
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch meal');
+    }
+    
+    const data = await res.json();
+    return data.meals?.[0] || null;
+  } catch (error) {
+    console.error('Error fetching meal:', error);
+    return null;
+  }
+}
+
+/**
+ * Fetch random popular movie from TMDB
+ */
+async function getRandomMovie(): Promise<Movie | null> {
+  const apiKey = process.env.TMDB_API_KEY;
+  
+  if (!apiKey) {
+    console.error('TMDB_API_KEY not configured');
+    return null;
+  }
+
+  try {
+    const res = await fetch(
+      `https://api.themoviedb.org/3/movie/popular?api_key=${apiKey}&language=en-US&page=1`,
+      { cache: 'no-store' }
+    );
+    
+    if (!res.ok) {
+      throw new Error('Failed to fetch movie');
+    }
+    
+    const data = await res.json();
+    const movies = data.results || [];
+    
+    if (movies.length === 0) {
+      return null;
+    }
+    
+    // Pick a random movie from the popular list
+    const randomIndex = Math.floor(Math.random() * Math.min(movies.length, 10));
+    return movies[randomIndex];
+  } catch (error) {
+    console.error('Error fetching movie:', error);
+    return null;
+  }
+}
+
+/**
+ * Home Page - React Server Component
+ */
+export default async function HomePage() {
+  const [meal, movie] = await Promise.all([
+    getRandomMeal(),
+    getRandomMovie(),
+  ]);
+
+  if (!meal || !movie) {
+    return (
+      <div className="text-center py-20">
+        <h2 className="text-2xl font-bold mb-4">⚠️ Oops!</h2>
+        <p className="text-muted-foreground">
+          {!meal && 'Failed to fetch meal. '}
+          {!movie && 'Failed to fetch movie. '}
+        </p>
+        <p className="mt-4 text-sm text-muted-foreground">
+          {!movie && 'Make sure TMDB_API_KEY is configured in .env.local'}
+        </p>
+      </div>
+    );
+  }
+
+  const mealData = {
+    name: meal.strMeal,
+    image: meal.strMealThumb,
+    category: meal.strCategory,
+  };
+
+  const movieData = {
+    title: movie.title,
+    image: `https://image.tmdb.org/t/p/w500${movie.poster_path}`,
+    releaseDate: movie.release_date,
+    rating: movie.vote_average,
+  };
+
   return (
-    <div className="flex min-h-screen items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex min-h-screen w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
-      </main>
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-3xl font-bold mb-2">Discover Your Perfect Pairing</h2>
+        <p className="text-muted-foreground">
+          A randomly generated meal and movie combination just for you!
+        </p>
+      </div>
+
+      <form action={savePairingAction}>
+        {/* Hidden fields for Server Action */}
+        <input type="hidden" name="mealName" value={mealData.name} />
+        <input type="hidden" name="mealImage" value={mealData.image} />
+        <input type="hidden" name="mealCategory" value={mealData.category} />
+        <input type="hidden" name="movieTitle" value={movieData.title} />
+        <input type="hidden" name="movieImage" value={movieData.image} />
+        <input type="hidden" name="movieReleaseDate" value={movieData.releaseDate} />
+        <input type="hidden" name="movieRating" value={movieData.rating.toString()} />
+
+        <PairingCard meal={mealData} movie={movieData}>
+          <SaveButton />
+        </PairingCard>
+      </form>
+
+      <div className="text-center mt-6">
+        <a 
+          href="/" 
+          className="text-sm text-muted-foreground hover:underline"
+        >
+          🔄 Refresh for a new pairing
+        </a>
+      </div>
     </div>
   );
 }

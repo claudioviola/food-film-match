@@ -1,0 +1,32 @@
+[
+  {
+    "meal": {
+      "name": "Strawberry Rhubarb Pie",
+      "image": "https://www.themealdb.com/images/media/meals/178z5o1585514569.jpg",
+      "category": "Dessert"
+    },
+    "movie": {
+      "title": "Playdate",
+      "image": "https://image.tmdb.org/t/p/w500/fGodXWqJkkkbSebPIlxLSygV8GY.jpg",
+      "releaseDate": "2025-11-05",
+      "rating": 6.557
+    },
+    "id": "1763240974549",
+    "createdAt": "2025-11-15T21:09:34.549Z"
+  },
+  {
+    "meal": {
+      "name": "Ma Po Tofu",
+      "image": "https://www.themealdb.com/images/media/meals/1525874812.jpg",
+      "category": "Beef"
+    },
+    "movie": {
+      "title": "Tee Yai: Born to Be Bad",
+      "image": "https://image.tmdb.org/t/p/w500/ig00LBM2rv4fmCJOPATyRWOJnlL.jpg",
+      "releaseDate": "2025-11-13",
+      "rating": 7.167
+    },
+    "id": "1763241026394",
+    "createdAt": "2025-11-15T21:10:26.394Z"
+  }
+]
